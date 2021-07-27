@@ -1,0 +1,168 @@
+---
+title: "Project 2"
+author: "Ryan Westfall"
+date: "12/11/2020"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Abstract
+
+Powerlifting
+
+- Squat
+![](images/squat.jpg ){ width=30% }
+
+- Bench Press
+![](images/images/bench.jpg "My Picture"){ width=30% }
+- Deadlift
+![](images/deadlift.jpg "My Picture"){ width=30% }
+
+
+## Introduction
+
+![Ryan Westfall](images/Pro.jpeg "My Picture"){ width=20% }
+
+- Got into Weightlifting this year
+
+- Thought it would be a cool idea to make my assignment about it
+
+## The Data
+Data comes from a dataset compiled by powerlifters from powerlifters going to meets
+
+![](images/1.png){ width=100% }
+Variables to consider for cleanup:
+
+- Age
+- Drug Tested
+- Sex
+- NA values
+
+## ggplot Squat ~ Bodyweight
+
+![](images/2.png){ width=100% }
+
+
+
+## Background
+
+-How were the data collected? 
+
+-What is the story behind the data?
+
+-Why was it gathered?
+
+-What is your interest in the data?
+
+-What problem do you wish to solve?
+
+-What is my Hypothesis?
+
+## Theory needed to carry out SLR
+
+![](images/3.png){ width=100% }
+
+## The Assumptions
+
+![](images/4.png){ width=100% }
+
+## Carry out SLR
+
+![](images/5.png){ width=100% }
+
+## Validity - verifying assumptions
+
+<h1>Independence of data</h1>
+ <br/>
+ 
+The error associated with one value of y has no effect on the errors associated with other y values.
+
+I think we can make the claim that other weightlifters won't effect the lift of other weightlifters in any significant way. With this claim, this assumption that y's are independent of one another is true.
+
+
+## Finding RSS
+![](images/6.png){ width=100% }
+
+
+
+## Finding TSS
+![](images/7.png){ width=100% }
+
+
+## R squared
+
+![](images/8.png){ width=50% }
+
+![](images/9.png){ width=50% }
+
+
+## Trendscatter on Residual Vs Fitted
+
+![](images/10.png){ width=70% }
+
+-Linearity assumption is met, because the blue line is quite linear.
+
+-Variation is constant assumption is met. These points don't show any pattern and just look like a cloud of points.
+
+## Test for Normality
+
+$$\epsilon_i \sim N(0,\sigma^2)$$
+
+![](images/11.png){ width=80% }
+
+
+## Estimating the Parameters
+
+![](images/12.png){ width=60% }
+
+## Results
+Squat:
+
+β0^ = 71.5138
+<br/>
+β1^ = 1.9534
+<br/>
+R^2 = 0.4971
+
+
+Bench:
+
+β0^ = 33.88057
+<br/>
+β1^ = 1.34571
+<br/>
+R^2 = 0.5053
+
+
+Deadlift:
+
+β0^ = 118.9751
+<br/>
+β1^ = 1.5167
+<br/>
+R^2 = 0.4489
+
+## CI's
+![](images/13.png){ width=50% }
+
+## Cooks plot
+![](images/14.png){ width=100% }
+
+## Conclusion
+
+![](images/15.png){ width=100% }
+
+## References
+
+-Wikipedia. 2018a. “Cook’s Distance.” https://en.wikipedia.org/wiki/Cook%27s_distance.
+-Cheng, Jaime. “Relationship Goals - A Powerlifter's Lesson on Linear Regression.” Medium, Medium, 17 Aug. 2020, medium.com/@jaimejcheng/relationship-goals-a-powerlifters-lesson-on-linear-regression-5c6eb5b359d5. 
+-jbstatistics. “Simple Linear Regression: Checking Assumptions with Residual Plots.” YouTube, YouTube, 5 Dec. 2012, www.youtube.com/watch?v=iMdtTCX2Q70. 
+-marinstatlectures. “Checking Linear Regression Assumptions in R | R Tutorial 5.2 | MarinStatsLectures.” YouTube, YouTube, 13 Nov. 2013, www.youtube.com/watch?v=eTZ4VUZHzxw. 
+-Mendenhall, William, and Terry Sincich. Statistics for Engineering and the Sciences. Prentice Hall, 1995. 
+-“OpenPowerlifting Data.” OpenPowerlifting, www.openpowerlifting.org/data. 
+
+
+

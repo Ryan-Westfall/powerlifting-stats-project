@@ -1,0 +1,320 @@
+---
+title: "MATH 4753 Project 2"
+author: "Ryan Westfall"
+date:  "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    code_folding: show
+    csl: biomed-central.csl
+    df_print: paged
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    number_sections: yes
+    theme: journal
+    toc: yes
+    toc_float: yes
+  word_document:
+    toc: yes
+    toc_depth: 4
+  pdf_document:
+    df_print: kable
+    fig_caption: yes
+    fig_height: 6
+    fig_width: 7
+    highlight: tango
+    toc: yes
+    toc_depth: 4
+bibliography: project.bib
+abstract: This project is all about applications of SLR to real data using R. The dataset that I will be using contains data about powerlifting stats for individuals competing at powerlifting meets. I will be utilizing the textbook, the data set, and statistical knowledge accumulated over the course of this semester to perform an analysis of the data using R. Using Simple Linear Regression on my data set, I will examine the relationship between a person's weight and the 3 main compound movement exercises, which are the bench press, the deadlift, and the squat. With the data, I will be most focused on the squat. 
+---
+
+<center>
+
+![Ryan Westfall](images/Pro.jpeg "My Picture"){ width=20% }
+
+</center>
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(leaflet)
+library(dplyr)
+```
+
+
+
+# My Video
+
+Here is link to Yyoutube video of my project:
+https://www.youtube.com/watch?v=jdlBDtE9nLk
+
+
+# Introduction
+This past year I've picked up weightlifting as a new hobby of mine. And with every new interest, I've been trying to make myself learn more and more about it to further my growth. From my personal experience, talking to friends, and watching the experts online, I've taken notice to a pretty obvious trend among weightlifters: the more you weigh, the more you can lift. With this project, I wish to prove this trend and then compare the relationship between how much a person weighs and how much can they lift on the bench, deadlift, and squat.
+
+# The Data
+All this data has to many independent variables for me to most accurately run my analysis, so I will subset the data to only account for Males between the age of 20-40 that were drug tested for their meet. I will also clean the data to not get any NA values with the dataset. With this subset, we will still have a large 185,000 points of data for this SLR. I will then take a sample of 1,000 points of this data.
+
+```{r map, echo=FALSE, fig.align='center'}
+Lifts <-  read.csv("weights.csv")
+QC <- subset(Lifts, Sex == "M" &  Age >= 20 & Age <= 40 & Tested == "Yes" & Event == "SBD")
+#dim(QC)
+QC <- subset(QC, Best3SquatKg > 0 & Best3DeadliftKg > 0 & Best3BenchKg & BodyweightKg > 50 & BodyweightKg < 127)
+#dim(QC)
+QC <- subset(QC, !is.na(Best3SquatKg) & !is.na(Best3DeadliftKg) & !is.na(Best3BenchKg) & !is.na(BodyweightKg))
+#dim(QC)
+sample <- head(QC, n= 1000)
+
+```
+
+## What are the variables?
+The variables measured within this data are things like Age, Bodyweight, and Best lift within 3 sets of a specific exercise (e.g. Best3SquatKg), and other things a statistician would find most relevant of powerlifting data. But specifically the variables, I will be working with are "BodyweightKg", "Best3SquatKg", "Best3BenchKg", and "Best3DeadliftKg". The independant variable in our case being the "BodyweightKg". These variables that I will be using are continuous variables.
+
+```{r crosstalk}
+names(sample)
+```
+
+### Plot data
+
+```{r carcharacteristics, fig.height = 5, fig.cap = "MTCARS",fig.align='center',fig.cap="Graph of data with loess smoother"}
+library(ggplot2)
+g = ggplot(sample, aes(x = BodyweightKg , y = Best3SquatKg)) + ggtitle("Best single repetition max for squat @ bodyweight(kg)") + geom_point()
+g = g + geom_smooth(method = "loess")
+g
+```
+
+
+## How were the data collected? 
+The OpenPowerlifting project aims to create a permanent, accurate, convenient, accessible, open archive of the world's powerlifting data. This data has over 2 million entries of powerlifters entering in their lifts from different meets.
+
+## What is the story behind the data?
+Powerlifters, and powerlifting badly needed someone to organize its results. It's their hope that by giving away all this data for free, people would be more motivated to support the project by sending in corrections and telling other lifters about them. They want as many people actively using their data as possible, and for them to send in their own data which would cause them to have extremely accurate historical data.
+
+## Why was it gathered?
+Basically, the people running the database said they were librarians and archivists, and don't charge for this site for the same reason that librarians don't charge you to read one of their books.
+
+## What is your interest in the data?
+Currently, I am "cutting" down. Cutting means eating less and trying to shed body fat to end up lean whilst maintaining muscle mass. The thing about cutting though is that although I'm losing weight and body fat during the process, I am also losing muscle. So now that I have been cutting for around 3 months now, I have lost 15 lbs but thus am not able to lift as much weight now. It's because of what I have experienced with weight loss and lifting that I think this project on this type of data is so interesting.
+
+## What problem do you wish to solve?
+I am very curious to see the exact type of relationship body weight has on the bench, deadlift, and squat. I want to run this weight vs exercise experiment of the 3 mentioned exercises to see if body weight plays a more important role in one exercise than the others.
+
+# Theory needed to carry out SLR
+
+My hypothesis for running this analysis is that exercise (Y) will increase linearly as bodyweight (X) increases. I will make 3 models for the 3 different exercises to then relate them to bodyweight. The independent variable is bodyweight(X), and the dependent variables are the 3 exercises.
+
+In order to analyze this data, I will be using a simple linear regression model(SLR) that will take account for the errors in my prediction. The main idea behind SLR is that for any value of y and x there will be a mean value resulted as a straight line when graphed. The mean straight line is represented as the slope β1 and y intercept β0. And to account for errors, any points that are not on the line are equal to ϵ. When putting all this together:
+
+y=β0+β1xi+εi
+
+Where β0 and β1 are unknown parameters, β0+β1x is the mean value of y for a given x, and ε is the random error. Working with the assumption that some points are going to deviate from the line, I know that some will be above the line (positive deviation) and some will be below the line (negative deviation), with an E(ε)=0. This would make the mean value of y:
+
+E(y)=E(β0+β1xi+εi)=β0+β1xi+E(εi)=β0+β1xi
+
+Thus, the mean value of y for any given value of x will be represented by E(Y|x) and will graph as a straight line, with a y-intercept of β0 and a slope of β1.
+
+In order to fit a SLR model to my dataset I need to first estimate the parameters β0 and β1. In order to make a valid estimate, it will depend on the sampling distributions of the estimators, which depend on the probability distribution of ε; thus, I need to make the following assumptions about ε (Mendenhall and Sincich 2016):
+
+the errors associated with different observations are independent of one another.
+the mean of the probability distribution of ϵ = 0;
+the variance of the probability distribution of ϵ is constant for all values of the independent variable - for a straight line model this means V(ϵ) = a constant for all values of x;
+the probability distribution of ϵ is normal;
+
+# Validity with mathematical expressions
+
+```{r}
+squat.lm=lm(sample$Best3SquatKg~sample$BodyweightKg)
+
+plot(Best3SquatKg~BodyweightKg,bg="Red", pch=21,cex=.5,
+     main="Scatter Plot and Fitted Line of Best3SquatKg vs BodyweightKg", data=sample)
+abline(squat.lm)
+```
+
+Overall the line seems to fit all right.
+
+## Checks on validity - verifying assumptions
+
+### Independence of data 
+I need to check the assumption that the values in y's for my variables are independent. Basically meaning, the error associated with one value of y has no effect on the errors associated with other y values.
+
+This is figured out by how the data was collected. And based on what we know about our dataset, I think we can make the claim that other weightlifters won't effect the lift of other weightlifters in any significant way. With this claim, this assumption that y's are independent of one another is true.
+
+### Calculating R^2
+We will now check what percentage of the relationship between one of the exercises, the squat, and body weight accounts for the total variation.
+
+We will find the residual sum of squares(RSS) of our graph. This value is the variation around our fitted line. We will be using this RSS value later to calculate our R^2 (the percentage of variation explained by the relationship between the two variables).
+
+
+```{r}
+plot(Best3SquatKg~BodyweightKg,bg="Red", pch=21,cex=.8,
+     main="Scatter Plot and Fitted Line of Best3SquatKg vs BodyweightKg", data=sample)
+abline(squat.lm)
+yhat=with(sample,predict(squat.lm,data.frame(BodyweightKg)))
+with(sample,{segments(BodyweightKg,Best3SquatKg,BodyweightKg,yhat)})
+abline(squat.lm)
+```
+```{r}
+RSS=with(sample,sum((Best3SquatKg-yhat)^2))
+RSS
+```
+
+Finding the variation of the points around the mean gives us our TSS (total sum of squares).
+
+```{r}
+plot(Best3SquatKg~BodyweightKg,bg="Red", pch=21,cex=.8,
+     main="Total Deviation Line Segments of Best3SquatKg vs BodyweightKg", data=sample)
+with(sample,abline(h=mean(Best3SquatKg)))
+with(sample, segments(BodyweightKg,Best3SquatKg,BodyweightKg,mean(Best3SquatKg),col="Green"))
+````
+
+```{r}
+TSS=with(sample,sum((Best3SquatKg-mean(Best3SquatKg))^2))
+TSS
+```
+
+
+```{r}
+R2 =(TSS-RSS)/TSS
+R2
+```
+So, this R^2 = 0.4971%
+
+Meaning the squat/bodyweight relationship accounts for 0.4971% of the variation, which is honestly not the best. This means that there are others things that account for the other 0.5029% of the variation. Though you can rationalize the value to be better  if you consider there are a multitude of other factors that will account for the other 0.5029% variation. For instance diet, muscle mass %, supplement usage, steriods, and ect. 
+
+### Use trendscatter
+```{r}
+library(s20x)
+trendscatter(Best3SquatKg~BodyweightKg, f = 0.5, data = sample, main="Best3SquatKg vs BodyweightKg")
+```
+
+### trendscatter on Residual Vs Fitted
+
+Find residuals and fitted values then plot them: 
+
+```{r}
+height.res = residuals(squat.lm)
+height.fit = fitted(squat.lm)
+
+trendscatter(height.res~height.fit, f = 0.5, data = squat.lm, xlab="Fitted Values",ylab="Residuals", xlim=c(185, 300), main="Residuals vs Fitted Values")
+```
+From this residual plot we can conclude that our linearity assumption is met, because the blue line is quite linear.
+
+Also, the variation is constant assumption is met. These points don't show any pattern and just look like a cloud of points.
+
+#### Shapiro-wilk
+We are checking if the errors are distributed normally using the shapiro-wilk test. Here our null hypothesis is that the errors are distributed Normal.
+
+$$\epsilon_i \sim N(0,\sigma^2)$$
+```{r}
+normcheck(squat.lm, shapiro.wilk = TRUE)
+```
+
+Our results from the graphs and Shapiro-wilk test shows that our residuals our NOT distributed Normal. We can come to this conclusion because within the Q-Q graph we see deviations on the end of our plot. Also when performing the Shapiro-wilk test, our P-value = 0, which is most definitely <= .05, meaning we reject the Null hypothesis in favor of the alternate. We can conclude our errors are NOT distributed Normal.
+
+## Estimating the Parameters
+
+In order to estimate β0 and β1 I am going to use the method of least squares, that is, I want to determine the line that best fits my data points with a minimum sum of squares of the deviations. This is called the SSE (sum of squares for error). In a straight-line model, I have already discussed that y=β0+β1xi+εi. The estimator will be yi^=β0^+β1^xi. The residual (the deviation of the ith value of y from its predicted value) is calculated by (yi−yi^)=yi−(β0^+β1^xi), thus, the SSE is ∑i=1n[yi−(β0^+β1^xi)].
+
+The functions that I will be using below are going to use the method of least squares to calculate β0^ and β1^
+
+### Main result 1: Squat ~ Body Weight
+
+```{r}
+squat.lm=lm(sample$Best3SquatKg~sample$BodyweightKg)
+summary(squat.lm)
+```
+
+### Main result 2: Bench Press ~ Body Weight
+
+```{r}
+bench.lm=lm(sample$Best3BenchKg~sample$BodyweightKg)
+summary(bench.lm)
+```
+
+### Main result 3: Deadlift ~ Body Weight
+
+```{r}
+deadlift.lm=lm(sample$Best3DeadliftKg~sample$BodyweightKg)
+summary(deadlift.lm)
+```
+
+### Results of multiple R squared
+
+Multiple R-squared squat:  0.4971
+Multiple R-squared bench:  0.5053
+Multiple R-squared deadlift:  0.4489
+
+
+
+These are the R squared values for our 3 lifts. They are not the best. Converting these results into english would be to say, " the Exercise~Bodyweight relationship accounts for R^2% of the variation.
+
+### Results of all point estimates
+
+Squat:
+β0^ = 71.5138
+β1^ = 1.9534
+
+Bench:
+β0^ = 33.88057
+β1^ = 1.34571
+
+Deadlift:
+β0^ = 118.9751
+β1^ = 1.5167
+
+Converting these paramters into plain english would be to say, "For every 1kg of bodyweight someone gains, they would lift β1^ more weight on that specific exercise."
+
+```{r}
+plot(Best3SquatKg~BodyweightKg,bg="Red", pch=21,cex=0, xlab="Body Weight(kg)", ylab="Weight Lifted(kg)",
+     main="Regression lines", data=sample)
+abline(squat.lm)
+abline(bench.lm)
+abline(deadlift.lm)
+```
+
+
+## Calculate cis for $\beta$ parameter estimates
+### Use of `ciReg()`
+Squat:
+```{r}
+ciReg(squat.lm)
+```
+Bench:
+```{r}
+ciReg(bench.lm)
+```
+Deadlift:
+```{r}
+ciReg(deadlift.lm)
+```
+
+### Check on outliers using cooks plots
+```{r}
+cooks20x(squat.lm)
+```
+
+Cooks Distance is telling us that the observation indexes 538, 894, and 938 have so large of values that they would need closer inspection.
+
+# Conclusion
+We have visted the most imporant areas when running a statistical analysis on a dataset. We first introduced the data that was a powerlifting dataset that tracked the lifts of competitive weightlifters at their respective meets. We explored how this data was cleaned and then used to support or deny our hypothesis. Once having our data we used a Simple Linear Regression analysis on it to determine the type of relationship between the specific exercise and bodyweight. We explored the 4 assumptions to try and verify them which for three we did and one we didn't. And after looking at the assumptions, we used the method of least squares to determine the line that best fits the data points, thus calculating the values of β0^ and β1^. We confirmed our earlier manual calculation of R squared on the squat with the summary function and calculated the ci of our regression.
+
+## Answer your research question
+The questioned I wanted answered in my initial research question was that did body weight play a more important role in one exercise than it did in another. From running the SLR on this dataset, I can say by looking at the β1^ values of the exercises that the squat scales best with weight than the deadlift than the benchpress.
+
+
+## Suggest ways to improve model or experiment
+Referring back to the the outliers using cooks plots, I believe getting rid of those large outliers will give me a much better line of best fit. I wanted to see a higher R squared value for the SLR, but that was not the case.
+
+
+# References
+Wikipedia. 2018a. “Cook’s Distance.” https://en.wikipedia.org/wiki/Cook%27s_distance.
+Cheng, Jaime. “Relationship Goals - A Powerlifter's Lesson on Linear Regression.” Medium, Medium, 17 Aug. 2020, medium.com/@jaimejcheng/relationship-goals-a-powerlifters-lesson-on-linear-regression-5c6eb5b359d5. 
+jbstatistics. “Simple Linear Regression: Checking Assumptions with Residual Plots.” YouTube, YouTube, 5 Dec. 2012, www.youtube.com/watch?v=iMdtTCX2Q70. 
+marinstatlectures. “Checking Linear Regression Assumptions in R | R Tutorial 5.2 | MarinStatsLectures.” YouTube, YouTube, 13 Nov. 2013, www.youtube.com/watch?v=eTZ4VUZHzxw. 
+Mendenhall, William, and Terry Sincich. Statistics for Engineering and the Sciences. Prentice Hall, 1995. 
+“OpenPowerlifting Data.” OpenPowerlifting, www.openpowerlifting.org/data. 
+
+
+  
